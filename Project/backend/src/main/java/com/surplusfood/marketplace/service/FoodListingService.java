@@ -103,24 +103,30 @@ public class FoodListingService {
             log.warn("Failed to broadcast food listing: {}", e.getMessage());
         }
 
-        List<User> nearbyUsers = userRepository.findNearbyConsumersAndNgos(lat.doubleValue(), lon.doubleValue(), 10.0);
-        Set<Long> notifiedUserIds = nearbyUsers.stream()
-                .map(User::getId)
-                .collect(Collectors.toSet());
+        if (lat != null && lon != null) {
+            try {
+                List<User> nearbyUsers = userRepository.findNearbyConsumersAndNgos(lat.doubleValue(), lon.doubleValue(), 10.0);
+                Set<Long> notifiedUserIds = nearbyUsers.stream()
+                        .map(User::getId)
+                        .collect(Collectors.toSet());
 
-        String nearbyMsg = String.format("A new surplus food listing '%s' is available near you from %s!",
-                savedListing.getName(), business.getBusinessName());
-        for (User user : nearbyUsers) {
-            notificationService.sendNotification(user, "New Food Nearby", nearbyMsg, NotificationType.NEW_FOOD_NEARBY);
-        }
+                String nearbyMsg = String.format("A new surplus food listing '%s' is available near you from %s!",
+                        savedListing.getName(), business.getBusinessName());
+                for (User user : nearbyUsers) {
+                    notificationService.sendNotification(user, "New Food Nearby", nearbyMsg, NotificationType.NEW_FOOD_NEARBY);
+                }
 
-        List<Wishlist> wishlisters = wishlistRepository.findByBusinessId(business.getId());
-        String wishlistMsg = String.format("Your favorite business '%s' just posted a new listing: '%s'!",
-                business.getBusinessName(), savedListing.getName());
-        for (Wishlist w : wishlisters) {
-            User user = w.getUser();
-            if (!notifiedUserIds.contains(user.getId())) {
-                notificationService.sendNotification(user, "New Food from Favorite Business", wishlistMsg, NotificationType.NEW_FOOD_NEARBY);
+                List<Wishlist> wishlisters = wishlistRepository.findByBusinessId(business.getId());
+                String wishlistMsg = String.format("Your favorite business '%s' just posted a new listing: '%s'!",
+                        business.getBusinessName(), savedListing.getName());
+                for (Wishlist w : wishlisters) {
+                    User user = w.getUser();
+                    if (!notifiedUserIds.contains(user.getId())) {
+                        notificationService.sendNotification(user, "New Food from Favorite Business", wishlistMsg, NotificationType.NEW_FOOD_NEARBY);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Failed to find nearby users or send notifications: {}. Continuing operation.", e.getMessage());
             }
         }
 

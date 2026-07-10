@@ -1,5 +1,8 @@
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
-import { Route, Routes } from 'react-router';
+import { Route, Routes, Navigate } from 'react-router';
+import { useAuth } from './contexts/AuthContext';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 
 const theme = createTheme({
   palette: {
@@ -20,21 +23,24 @@ const theme = createTheme({
   },
 });
 
-function SetupPlaceholder() {
-  return (
-    <main style={{ minHeight: '100vh', padding: 32 }}>
-      <h1>Real-Time Surplus Food Marketplace</h1>
-      <p>Step 1 setup is ready. Authentication screens will be added in Step 2.</p>
-    </main>
-  );
-}
-
 export default function App() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Routes>
-        <Route path="*" element={<SetupPlaceholder />} />
+        {isAuthenticated ? (
+          <>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </>
+        ) : (
+          <>
+            <Route path="/login" element={<Login />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </>
+        )}
       </Routes>
     </ThemeProvider>
   );

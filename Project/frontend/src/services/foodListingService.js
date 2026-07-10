@@ -55,3 +55,58 @@ export async function searchListings({
   });
   return data;
 }
+
+export async function createFoodListing(payload) {
+  return createListing(payload);
+}
+
+export async function getMyFoodListings(page = 0, size = 20) {
+  return getMyListings(page, size);
+}
+
+export async function getActiveFoodListings(
+  categoryId,
+  type,
+  vegetarian,
+  vegan,
+  keyword,
+  page = 0,
+  size = 20
+) {
+  return searchListings({
+    categoryId,
+    type,
+    vegetarian,
+    vegan,
+    keyword,
+    page,
+    size,
+  });
+}
+
+export async function getNearbyActiveFoodListings(
+  latitude,
+  longitude,
+  radius,
+  categoryId,
+  type,
+  vegetarian,
+  vegan,
+  keyword,
+  page = 0,
+  size = 20
+) {
+  return searchListings({
+    latitude,
+    longitude,
+    radius,
+    categoryId,
+    type,
+    vegetarian,
+    vegan,
+    keyword,
+    page,
+    size,
+  });
+}
+

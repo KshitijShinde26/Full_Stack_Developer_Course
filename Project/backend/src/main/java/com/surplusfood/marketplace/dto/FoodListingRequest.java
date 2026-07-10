@@ -38,12 +38,15 @@ public record FoodListingRequest(
 
         @NotNull(message = "Expiry time is required")
         @Future(message = "Expiry time must be in the future")
+        @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime expiryTime,
 
         @NotNull(message = "Pickup start time is required")
+        @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime pickupStartTime,
 
         @NotNull(message = "Pickup end time is required")
+        @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime pickupEndTime,
 
         @DecimalMin(value = "-90.0", message = "Latitude must be at least -90")

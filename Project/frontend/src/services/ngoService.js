@@ -36,3 +36,12 @@ export async function markNgoPending(ngoId) {
   const { data } = await apiClient.patch(`/admin/ngos/${ngoId}/pending`);
   return data;
 }
+
+export async function getNgoProfileAdminList(page = 0, size = 100) {
+  return searchNgos({ verified: null, page, size });
+}
+
+export async function verifyNgoProfile(ngoId) {
+  return verifyNgo(ngoId);
+}
+

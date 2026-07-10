@@ -41,3 +41,12 @@ export async function markBusinessPending(businessId) {
   const { data } = await apiClient.patch(`/admin/businesses/${businessId}/pending`);
   return data;
 }
+
+export async function getBusinessProfileAdminList(page = 0, size = 100) {
+  return searchBusinesses({ verified: null, page, size });
+}
+
+export async function verifyBusinessProfile(businessId) {
+  return verifyBusiness(businessId);
+}
+

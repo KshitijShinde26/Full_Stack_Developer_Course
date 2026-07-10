@@ -36,6 +36,20 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", request, fieldErrors);
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleMessageNotReadable(
+            org.springframework.http.converter.HttpMessageNotReadableException exception,
+            HttpServletRequest request
+    ) {
+        String msg = "Malformed JSON request or invalid field format";
+        if (exception.getCause() != null) {
+            msg += ": " + exception.getCause().getMessage();
+        } else {
+            msg += ": " + exception.getMessage();
+        }
+        return buildResponse(HttpStatus.BAD_REQUEST, msg, request, List.of());
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiErrorResponse> handleBadCredentials(
             BadCredentialsException exception,

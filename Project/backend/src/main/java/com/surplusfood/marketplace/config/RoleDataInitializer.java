@@ -1,7 +1,9 @@
 package com.surplusfood.marketplace.config;
 
+import com.surplusfood.marketplace.entity.Category;
 import com.surplusfood.marketplace.entity.Role;
 import com.surplusfood.marketplace.entity.RoleName;
+import com.surplusfood.marketplace.repository.CategoryRepository;
 import com.surplusfood.marketplace.repository.RoleRepository;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class RoleDataInitializer implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
+    private final CategoryRepository categoryRepository;
 
     @Override
     public void run(String... args) {
@@ -30,5 +33,14 @@ public class RoleDataInitializer implements CommandLineRunner {
                     role.setDescription(description);
                     return roleRepository.save(role);
                 }));
+
+        if (categoryRepository.count() == 0) {
+            java.util.List.of("Bakery", "Prepared Meals", "Groceries", "Produce", "Dairy", "Beverages").forEach(name -> {
+                Category cat = new Category();
+                cat.setName(name);
+                cat.setActive(true);
+                categoryRepository.save(cat);
+            });
+        }
     }
 }
