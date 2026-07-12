@@ -23,8 +23,13 @@ export function AuthProvider({ children }) {
       return response;
     },
     async logout() {
-      await authService.logout();
-      setUser(null);
+      try {
+        await authService.logout();
+      } catch (e) {
+        console.warn('Backend logout failed:', e);
+      } finally {
+        setUser(null);
+      }
     },
   }), [user]);
 

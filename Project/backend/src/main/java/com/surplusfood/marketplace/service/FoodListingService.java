@@ -244,8 +244,8 @@ public class FoodListingService {
             Double radius,
             Pageable pageable
     ) {
-        LocalDateTime now = LocalDateTime.now();
         Page<FoodListing> page;
+        LocalDateTime now = LocalDateTime.now();
 
         if (latitude != null && longitude != null) {
             double searchRadius = radius != null ? radius : 10.0; // default 10km

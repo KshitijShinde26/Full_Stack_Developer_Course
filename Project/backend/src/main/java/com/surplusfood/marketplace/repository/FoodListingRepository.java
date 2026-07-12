@@ -17,7 +17,7 @@ public interface FoodListingRepository extends JpaRepository<FoodListing, Long> 
     Page<FoodListing> findByBusinessIdAndStatusNot(Long businessId, FoodListingStatus status, Pageable pageable);
 
     @Query(value = "SELECT *, " +
-            "(6371 * acos(cos(radians(:latitude)) * cos(radians(latitude)) * cos(radians(longitude) - radians(:longitude)) + sin(radians(:latitude)) * sin(radians(latitude)))) AS distance " +
+            "(6371 * acos(LEAST(1.0, GREATEST(-1.0, cos(radians(:latitude)) * cos(radians(latitude)) * cos(radians(longitude) - radians(:longitude)) + sin(radians(:latitude)) * sin(radians(latitude)))))) AS distance " +
             "FROM food_listings " +
             "WHERE status = 'ACTIVE' " +
             "AND expiry_time > :now " +
@@ -36,7 +36,7 @@ public interface FoodListingRepository extends JpaRepository<FoodListing, Long> 
                     "AND (:vegetarian IS NULL OR vegetarian = :vegetarian) " +
                     "AND (:vegan IS NULL OR vegan = :vegan) " +
                     "AND (:keyword IS NULL OR (name LIKE CONCAT('%', :keyword, '%') OR description LIKE CONCAT('%', :keyword, '%'))) " +
-                    "AND (6371 * acos(cos(radians(:latitude)) * cos(radians(latitude)) * cos(radians(longitude) - radians(:longitude)) + sin(radians(:latitude)) * sin(radians(latitude)))) <= :radius",
+                    "AND (6371 * acos(LEAST(1.0, GREATEST(-1.0, cos(radians(:latitude)) * cos(radians(latitude)) * cos(radians(longitude) - radians(:longitude)) + sin(radians(:latitude)) * sin(radians(latitude)))))) <= :radius",
             nativeQuery = true)
     Page<FoodListing> findNearbyActiveListings(
             @Param("latitude") double latitude,

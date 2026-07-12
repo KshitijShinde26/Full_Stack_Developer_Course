@@ -4,7 +4,7 @@ import * as foodListingService from '../services/foodListingService';
 import * as categoryService from '../services/categoryService';
 import * as imageService from '../services/imageService';
 
-export default function CreateListingModal({ open, onClose, onSuccess }) {
+export default function CreateListingModal({ open, onClose, onSuccess, prefillData }) {
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -27,10 +27,82 @@ export default function CreateListingModal({ open, onClose, onSuccess }) {
     }
   }, [open]);
 
+  useEffect(() => {
+    if (open && prefillData) {
+      if (prefillData.foodName && prefillData.foodName !== 'Not Provided') {
+        setName(prefillData.foodName);
+      }
+      
+      let descParts = [];
+      if (prefillData.preparationTime && prefillData.preparationTime !== 'Not Provided') {
+        descParts.push(`Prep time: ${prefillData.preparationTime}`);
+      }
+      if (prefillData.storageType && prefillData.storageType !== 'Not Provided') {
+        descParts.push(`Storage: ${prefillData.storageType}`);
+      }
+      if (prefillData.packagingStatus && prefillData.packagingStatus !== 'Not Provided') {
+        descParts.push(`Packaging: ${prefillData.packagingStatus}`);
+      }
+      if (prefillData.specialInstructions && prefillData.specialInstructions !== 'Not Provided') {
+        descParts.push(`Instructions: ${prefillData.specialInstructions}`);
+      }
+      
+      let finalDesc = prefillData.description || '';
+      if (descParts.length > 0) {
+        finalDesc += (finalDesc ? '\n' : '') + descParts.join(' | ');
+      }
+      setDescription(finalDesc);
+
+      if (prefillData.quantity && prefillData.quantity !== 'Not Provided') {
+        const match = prefillData.quantity.match(/\d+/);
+        if (match) {
+          setQty(match[0]);
+        }
+      }
+
+      if (prefillData.foodType) {
+        const typeLower = prefillData.foodType.toLowerCase();
+        if (typeLower.includes('non')) {
+          setVegetarian(false);
+          setVegan(false);
+        } else if (typeLower.includes('veg')) {
+          setVegetarian(true);
+          if (typeLower.includes('vegan')) {
+            setVegan(true);
+          } else {
+            setVegan(false);
+          }
+        }
+      }
+
+      setType('FREE_DONATION');
+
+      const now = new Date();
+      const defaultExpiry = new Date(now.getTime() + 4 * 60 * 60 * 1000); // 4 hours
+      const pad = (num) => String(num).padStart(2, '0');
+      const formatDateTimeLocal = (date) => {
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+      };
+      setExpiry(formatDateTimeLocal(defaultExpiry));
+      setPickupStart(formatDateTimeLocal(now));
+      setPickupEnd(formatDateTimeLocal(defaultExpiry));
+    }
+  }, [open, prefillData]);
+
   async function loadCategories() {
     try {
       const res = await categoryService.getCategories();
       setCategories(res || []);
+      
+      if (prefillData && prefillData.foodCategory && res && res.length > 0) {
+        const matched = res.find(c => c.name.toLowerCase().includes(prefillData.foodCategory.toLowerCase()) || 
+                                     prefillData.foodCategory.toLowerCase().includes(c.name.toLowerCase()));
+        if (matched) {
+          setCategory(matched.id);
+          return;
+        }
+      }
+      
       if (res && res.length > 0) {
         setCategory(res[0].id);
       }
@@ -90,7 +162,12 @@ export default function CreateListingModal({ open, onClose, onSuccess }) {
       onClose();
     } catch (err) {
       console.error(err);
-      alert('Error creating listing: ' + (err.response?.data?.message || err.message));
+      let errorMsg = err.response?.data?.message || err.message;
+      if (err.response?.data?.fieldErrors && err.response.data.fieldErrors.length > 0) {
+        const details = err.response.data.fieldErrors.map(fe => `${fe.field}: ${fe.message}`).join('\n');
+        errorMsg += ':\n' + details;
+      }
+      alert('Error creating listing: ' + errorMsg);
     } finally {
       setLoading(false);
     }

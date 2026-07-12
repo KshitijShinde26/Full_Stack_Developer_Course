@@ -9,6 +9,7 @@ import ComplaintsSection from '../components/ComplaintsSection';
 import WishlistSection from '../components/WishlistSection';
 import OrdersSection from '../components/OrdersSection';
 import CreateListingModal from '../components/CreateListingModal';
+import ChatbotWidget from '../components/ChatbotWidget';
 import * as foodListingService from '../services/foodListingService';
 import * as categoryService from '../services/categoryService';
 import * as wishlistService from '../services/wishlistService';
@@ -28,10 +29,18 @@ export default function Dashboard() {
   const [vegetarian, setVegetarian] = useState(false);
   const [vegan, setVegan] = useState(false);
   const [favoritesMap, setFavoritesMap] = useState({});
+  const [nearbyOnly, setNearbyOnly] = useState(false);
 
   // Business Owner Listings States
   const [businessListings, setBusinessListings] = useState([]);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [chatbotPrefillData, setChatbotPrefillData] = useState(null);
+
+
+  function handleChatbotPrefill(data) {
+    setChatbotPrefillData(data);
+    setCreateModalOpen(true);
+  }
 
   // Purchase/Claim Dialog States
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -42,7 +51,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadBrowseData();
-  }, [search, category, radius, vegetarian, vegan]);
+  }, [search, category, radius, vegetarian, vegan, nearbyOnly]);
 
   useEffect(() => {
     if (user && user.roles.includes('ROLE_BUSINESS_OWNER')) {
@@ -59,9 +68,9 @@ export default function Dashboard() {
       // Determine listing filter types based on role
       const listingType = user.roles.includes('ROLE_NGO') ? 'FREE_DONATION' : 'DISCOUNT_SALE';
 
-      // Load Listings (Haversine radius query if user has coordinates)
+      // Load Listings (Haversine radius query if user has coordinates and nearbyOnly is active)
       let res;
-      if (user.latitude && user.longitude) {
+      if (nearbyOnly && user.latitude && user.longitude) {
         res = await foodListingService.getNearbyActiveFoodListings(
           user.latitude,
           user.longitude,
@@ -196,8 +205,16 @@ export default function Dashboard() {
                       </FormControl>
                       {user.latitude && (
                         <Box sx={{ mb: 2 }}>
-                          <Typography variant="body2" sx={{ mb: 1 }}>Radius Range: <strong>{radius} km</strong></Typography>
-                          <Slider value={radius} onChange={(_, val) => setRadius(val)} min={1} max={50} valueLabelDisplay="auto" />
+                          <FormControlLabel
+                            control={<Checkbox checked={nearbyOnly} onChange={(e) => setNearbyOnly(e.target.checked)} />}
+                            label="Search nearby only"
+                          />
+                          {nearbyOnly && (
+                            <Box sx={{ mt: 1 }}>
+                              <Typography variant="body2" sx={{ mb: 1 }}>Radius Range: <strong>{radius} km</strong></Typography>
+                              <Slider value={radius} onChange={(_, val) => setRadius(val)} min={1} max={50} valueLabelDisplay="auto" />
+                            </Box>
+                          )}
                         </Box>
                       )}
                       <FormControlLabel control={<Checkbox checked={vegetarian} onChange={(e) => setVegetarian(e.target.checked)} />} label="Vegetarian" />
@@ -245,7 +262,16 @@ export default function Dashboard() {
                       ))}
                     </Grid>
                   )}
-                  <CreateListingModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} onSuccess={loadBusinessListings} />
+                  <CreateListingModal
+                    open={createModalOpen}
+                    onClose={() => {
+                      setCreateModalOpen(false);
+                      setChatbotPrefillData(null);
+                    }}
+                    onSuccess={loadBusinessListings}
+                    prefillData={chatbotPrefillData}
+                  />
+                  <ChatbotWidget onPrefill={handleChatbotPrefill} />
                 </Box>
               )}
               {activeTab === 1 && <OrdersSection role={user.roles[0]} />}
@@ -274,8 +300,16 @@ export default function Dashboard() {
                       </FormControl>
                       {user.latitude && (
                         <Box sx={{ mb: 2 }}>
-                          <Typography variant="body2" sx={{ mb: 1 }}>Radius Range: <strong>{radius} km</strong></Typography>
-                          <Slider value={radius} onChange={(_, val) => setRadius(val)} min={1} max={50} valueLabelDisplay="auto" />
+                          <FormControlLabel
+                            control={<Checkbox checked={nearbyOnly} onChange={(e) => setNearbyOnly(e.target.checked)} />}
+                            label="Search nearby only"
+                          />
+                          {nearbyOnly && (
+                            <Box sx={{ mt: 1 }}>
+                              <Typography variant="body2" sx={{ mb: 1 }}>Radius Range: <strong>{radius} km</strong></Typography>
+                              <Slider value={radius} onChange={(_, val) => setRadius(val)} min={1} max={50} valueLabelDisplay="auto" />
+                            </Box>
+                          )}
                         </Box>
                       )}
                       <FormControlLabel control={<Checkbox checked={vegetarian} onChange={(e) => setVegetarian(e.target.checked)} />} label="Vegetarian" />
@@ -323,7 +357,7 @@ export default function Dashboard() {
             <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 320 }}>
               <Typography variant="body1">Listing: <strong>{selectedListing.name}</strong></Typography>
               <Typography variant="body2" color="text.secondary">Available Stock: {selectedListing.availableQuantity} items</Typography>
-              
+
               <TextField fullWidth label="Checkout Quantity" type="number" value={checkoutQty} onChange={(e) => setCheckoutQty(Math.min(selectedListing.availableQuantity, Math.max(1, parseInt(e.target.value) || 1)))} size="small" />
 
               {!user.roles.includes('ROLE_NGO') && (
@@ -353,7 +387,7 @@ function FoodListingCard({ listing, isFavorite, onToggleFavorite, onAction, role
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#181d1c', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 2, position: 'relative' }}>
       <CardMedia component="img" height="160" image={imgUrl} alt={listing.name} />
-      
+
       {!isBusiness && onToggleFavorite && (
         <IconButton sx={{ position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.5)', '&:hover': { backgroundColor: 'rgba(0,0,0,0.7)' } }} onClick={() => onToggleFavorite(listing.businessId)}>
           {isFavorite ? <FavIcon color="error" /> : <FavBorderIcon sx={{ color: '#fff' }} />}

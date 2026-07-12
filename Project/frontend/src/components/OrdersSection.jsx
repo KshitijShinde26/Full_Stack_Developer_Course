@@ -63,9 +63,11 @@ export default function OrdersSection({ role }) {
       
       // Simulate webhook call to backend payments webhook
       // For local development sandbox, call mock payment completion directly
+      await paymentService.simulateWebhookSuccess(intentRes.stripePaymentIntentId);
       loadData();
     } catch (e) {
       console.error(e);
+      alert(e.response?.data?.message || 'Error simulating payment.');
     }
   }
 

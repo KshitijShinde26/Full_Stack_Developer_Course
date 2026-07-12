@@ -16,6 +16,8 @@ public class RoleDataInitializer implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
     private final CategoryRepository categoryRepository;
+    private final com.surplusfood.marketplace.repository.UserRepository userRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
@@ -41,6 +43,22 @@ public class RoleDataInitializer implements CommandLineRunner {
                 cat.setActive(true);
                 categoryRepository.save(cat);
             });
+        }
+
+        if (userRepository.findByEmailIgnoreCase("admin@surplusfood.com").isEmpty()) {
+            Role adminRole = roleRepository.findByName(RoleName.ROLE_ADMIN)
+                    .orElseThrow(() -> new RuntimeException("ROLE_ADMIN missing"));
+            com.surplusfood.marketplace.entity.User admin = new com.surplusfood.marketplace.entity.User();
+            admin.setFullName("System Admin");
+            admin.setEmail("admin@surplusfood.com");
+            admin.setPhone("+1234567890");
+            admin.setPasswordHash(passwordEncoder.encode("admin"));
+            admin.setAccountStatus(com.surplusfood.marketplace.entity.AccountStatus.ACTIVE);
+            admin.setEmailVerified(true);
+            admin.setLatitude(new java.math.BigDecimal("37.7749"));
+            admin.setLongitude(new java.math.BigDecimal("-122.4194"));
+            admin.setRoles(new java.util.HashSet<>(java.util.Set.of(adminRole)));
+            userRepository.save(admin);
         }
     }
 }
